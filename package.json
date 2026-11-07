@@ -8,6 +8,7 @@
     "server": "nodemon server.js",
     "client": "npm start --prefix ./client",
     "client-install": "npm i --prefix ./client",
+    "seed:regional": "node seedRegionalData.js",
     "start": "concurrently \"npm run server\" \"npm run client\""
   },
   "keywords": [],

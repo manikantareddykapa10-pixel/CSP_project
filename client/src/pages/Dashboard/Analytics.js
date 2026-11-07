@@ -2,8 +2,11 @@ import React, { useEffect, useState } from "react";
 import Layout from "../../components/shared/Layout/Layout";
 import API from "./../../services/API";
 import moment from "moment";
+import { useSelector } from "react-redux";
+import toast from "react-hot-toast";
 
 const Analytics = () => {
+  const { user } = useSelector((state) => state.auth);
   const [data, setData] = useState([]);
   const [inventoryData,setInventoryData] = useState([]);
   const colors = ['#98D8FF','#FF8080','#F8F0E5','#F6FDC3', '#CDFAD5','#CDF0EA', '#F6C6EA', '#DFCCFB']
@@ -16,7 +19,7 @@ const Analytics = () => {
         setInventoryData(data?.inventory);
       }
     } catch (error) {
-      console.log(error)
+      toast.error(error?.response?.data?.message || "Could not load recent blood records.");
     }
   }
 
@@ -32,7 +35,7 @@ const Analytics = () => {
         console.log(data)
       }
     } catch (error) {
-      console.log(error);
+      toast.error(error?.response?.data?.message || "Could not load blood group analytics.");
     }
   };
 
@@ -44,7 +47,7 @@ const Analytics = () => {
     <Layout>
       <div className="d-flex flex-row flex-wrap align-items-center justify-content-center">
         {data.map((record,i) => (
-          <div className="card m-3 p-2" style={{ width: "18rem", borderRadius: '10px' ,backgroundColor:`${colors[i]}` }}>
+          <div className="card m-3 p-2" key={record.bloodGroup} style={{ width: "18rem", borderRadius: '10px' ,backgroundColor:`${colors[i]}` }}>
             <div className="card-body">
               <h1 className="card-title card_title bg-light text-dark text-center mb-3">{record.bloodGroup}</h1>
               <p className="card-text">
@@ -61,14 +64,14 @@ const Analytics = () => {
         ))}
       </div>
       <div className="container mt-3 w-75">
-        <h1 className="m-3">Recent Blood Logs</h1>
+        <h1 className="m-3">Recent Blood Logs{user?.role === "hospital" ? " for this hospital" : ""}</h1>
       <table className="table">
               <thead>
                 <tr>
                   <th scope="col">Blood Groud</th>
                   <th scope="col">InventoryType</th>
                   <th scope="col">Quantity</th>
-                  <th scope="col">Donar Email</th>
+                  <th scope="col">Donor / Hospital</th>
                   <th scope="col">Time Date</th>
                 </tr>
               </thead>
@@ -78,7 +81,7 @@ const Analytics = () => {
                     <td>{record.bloodGroup}</td>
                     <td>{record.inventoryType.toUpperCase()}</td>
                     <td>{record.quantity} ml</td>
-                    <td>{record.email}</td>
+                    <td>{record.donar?.email || record.hospital?.hospitalName || record.email}</td>
                     <td>{moment(record.createdAt).format("DD/MM/YYYY hh:mm A")}</td>
                   </tr>
                 ))}

@@ -56,7 +56,19 @@ const Hospital = () => {
             <tbody>
               {data?.map((record) => (
                 <tr key={record._id}>
-                  <td>{record.hospitalName}</td>
+                  <td>
+                    <div className="d-flex align-items-center gap-2">
+                      {record.profilePic && (
+                        <img
+                          src={record.profilePic}
+                          alt=""
+                          className="rounded-circle"
+                          style={{ width: 36, height: 36, objectFit: 'cover' }}
+                        />
+                      )}
+                      {record.hospitalName}
+                    </div>
+                  </td>
                   <td>{record.email}</td>
                   <td>{record.phone}</td>
                   <td>{record.address}</td>

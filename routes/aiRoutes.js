@@ -1,5 +1,6 @@
 const express = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
+const authorizeRoles = require('../middleware/authorizeRoles');
 
 // Import AI Controllers
 const { smartDonorMatch } = require('../controllers/ai/donorMatchingController');
@@ -15,15 +16,15 @@ const router = express.Router();
 // Smart Donor Matching
 // POST /api/v1/ai/match-donors
 // Body: { bloodType, location: { lat, lng }, urgency, maxDistance, limit }
-router.post('/match-donors', authMiddleware, smartDonorMatch);
+router.post('/match-donors', authMiddleware, authorizeRoles('admin', 'hospital'), smartDonorMatch);
 
 // Blood Demand Prediction
 // GET /api/v1/ai/predict-demand?bloodType=O+&days=7
-router.get('/predict-demand', authMiddleware, predictBloodDemand);
+router.get('/predict-demand', authMiddleware, authorizeRoles('admin', 'hospital'), predictBloodDemand);
 
 // Inventory Optimization
 // GET /api/v1/ai/optimize-inventory
-router.get('/optimize-inventory', authMiddleware, optimizeInventory);
+router.get('/optimize-inventory', authMiddleware, authorizeRoles('admin', 'hospital'), optimizeInventory);
 
 // AI Chatbot
 // POST /api/v1/ai/chatbot
@@ -32,14 +33,14 @@ router.post('/chatbot', chatbotQuery);
 
 // Chatbot Statistics
 // GET /api/v1/ai/chatbot/stats
-router.get('/chatbot/stats', authMiddleware, getChatbotStats);
+router.get('/chatbot/stats', authMiddleware, authorizeRoles('admin', 'hospital'), getChatbotStats);
 
 // ============================================
 // AI DASHBOARD & STATS
 // ============================================
 
 // Get AI Features Overview
-router.get('/dashboard', authMiddleware, (req, res) => {
+router.get('/dashboard', authMiddleware, authorizeRoles('admin', 'hospital'), (req, res) => {
   res.status(200).json({
     success: true,
     message: 'AI Features Dashboard',

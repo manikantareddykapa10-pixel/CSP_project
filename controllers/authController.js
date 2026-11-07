@@ -1,6 +1,7 @@
 const userModel = require('../models/userModel.js')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken');
+const { getDb } = require('../config/db');
 
 const registerController = async (req, res) => {
     try {
@@ -114,4 +115,39 @@ const updateLocationController = async (req, res) => {
   }
 };
 
-module.exports = {registerController, loginController, currentUserController, updateLocationController};
+const updateProfilePictureController = async (req, res) => {
+  try {
+    const { profilePic } = req.body;
+    if (typeof profilePic !== 'string' ||
+        !/^data:image\/(?:jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(profilePic)) {
+      return res.status(400).json({ success: false, message: 'Choose a JPEG, PNG, or WebP profile picture.' });
+    }
+
+    const imageData = profilePic.slice(profilePic.indexOf(',') + 1);
+    if (Buffer.from(imageData, 'base64').length > 2 * 1024 * 1024) {
+      return res.status(400).json({ success: false, message: 'Profile picture must be 2 MB or smaller.' });
+    }
+
+    const db = getDb();
+    const result = db.prepare(
+      "UPDATE users SET profilePic = ?, updatedAt = ? WHERE _id = ? AND role = 'donar'"
+    ).run(profilePic, new Date().toISOString(), req.body.userId);
+
+    if (result.changes === 0) {
+      return res.status(403).json({ success: false, message: 'Only donor accounts can update a donor profile picture.' });
+    }
+
+    return res.status(200).json({ success: true, message: 'Profile picture updated.', profilePic });
+  } catch (error) {
+    console.error('Error updating profile picture:', error);
+    return res.status(500).json({ success: false, message: 'Could not update profile picture.' });
+  }
+};
+
+module.exports = {
+  registerController,
+  loginController,
+  currentUserController,
+  updateLocationController,
+  updateProfilePictureController
+};

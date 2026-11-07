@@ -28,6 +28,7 @@ function connectDB() {
       bloodGroup TEXT NOT NULL,
       requestedBy TEXT NOT NULL,
       acceptedBy TEXT,
+      broadcasted INTEGER NOT NULL DEFAULT 0,
       status TEXT NOT NULL DEFAULT 'pending',
       location_lat REAL,
       location_lng REAL,
@@ -54,8 +55,18 @@ function connectDB() {
       lastDonation TEXT,
       totalDonations INTEGER DEFAULT 0,
       isAvailable INTEGER DEFAULT 1,
+      profilePic TEXT,
       createdAt TEXT NOT NULL,
       updatedAt TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS request_donors (
+      requestId TEXT NOT NULL REFERENCES requests(_id) ON DELETE CASCADE,
+      donorId TEXT NOT NULL REFERENCES users(_id) ON DELETE CASCADE,
+      status TEXT NOT NULL DEFAULT 'notified',
+      notifiedAt TEXT NOT NULL,
+      respondedAt TEXT,
+      PRIMARY KEY (requestId, donorId)
     );
 
     CREATE TABLE IF NOT EXISTS inventory (
@@ -71,6 +82,15 @@ function connectDB() {
       updatedAt TEXT NOT NULL
     );
   `);
+
+  const userColumns = db.pragma('table_info(users)');
+  if (!userColumns.some(column => column.name === 'profilePic')) {
+    db.exec('ALTER TABLE users ADD COLUMN profilePic TEXT');
+  }
+  const requestColumns = db.pragma('table_info(requests)');
+  if (!requestColumns.some(column => column.name === 'broadcasted')) {
+    db.exec('ALTER TABLE requests ADD COLUMN broadcasted INTEGER NOT NULL DEFAULT 0');
+  }
 
   console.log(`connected to SQLite database`.bgCyan.white);
 }

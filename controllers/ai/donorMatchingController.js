@@ -115,10 +115,16 @@ const smartDonorMatch = async (req, res) => {
       'name email phone bloodGroup address location lastDonation totalDonations'
     );
 
-    if (!allDonors || allDonors.length === 0) {
+    const locatedDonors = allDonors.filter(donor =>
+      donor.location &&
+      Number.isFinite(Number(donor.location?.lat)) &&
+      Number.isFinite(Number(donor.location?.lng))
+    );
+
+    if (locatedDonors.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'No donors found in the system'
+        message: 'No donors with saved locations were found'
       });
     }
 
@@ -126,15 +132,7 @@ const smartDonorMatch = async (req, res) => {
     const scoredDonors = [];
 
     // Score each donor
-    for (const donor of allDonors) {
-      // Add approximate location if not present (Delhi area default for demo)
-      if (!donor.location || (!donor.location.lat && !donor.location.lng)) {
-        // In production, use geocoding API. For now, random Delhi area coords
-        const dlat = 28.5 + Math.random() * 0.3;
-        const dlng = 77.0 + Math.random() * 0.4;
-        donor.location = { lat: dlat, lng: dlng };
-      }
-
+    for (const donor of locatedDonors) {
       const score = calculateDonorScore(donor, location, bloodType, requestDate);
 
       if (score > 0) {

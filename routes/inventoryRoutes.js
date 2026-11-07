@@ -1,5 +1,6 @@
 const express = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
+const authorizeRoles = require('../middleware/authorizeRoles');
 const { inventoryValidation } = require('../middleware/validationMiddleware');
 const { createInventoryController, getInventoryController, getDonarsController, getHospitalController, getOrgnaisationController, getOrgnaisationForHospitalController, getInventoryHospitalController, getRecentInventoryController } = require('../controllers/inventoryController');
 const router = express.Router();
@@ -9,8 +10,8 @@ const router = express.Router();
 router.post('/create-inventory', authMiddleware, inventoryValidation, createInventoryController);
 
 router.get('/get-inventory', authMiddleware, getInventoryController);
-router.get('/get-recent-inventory', authMiddleware, getRecentInventoryController);
-router.post('/get-inventory-hospital', authMiddleware, getInventoryHospitalController);
+router.get('/get-recent-inventory', authMiddleware, authorizeRoles('admin', 'hospital', 'organisation'), getRecentInventoryController);
+router.post('/get-inventory-hospital', authMiddleware, authorizeRoles('admin', 'hospital', 'donar'), getInventoryHospitalController);
 
 
 router.get('/get-donars', authMiddleware, getDonarsController);

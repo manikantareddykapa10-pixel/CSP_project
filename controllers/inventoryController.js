@@ -108,8 +108,15 @@ const getInventoryController = async (req, res) => {
 
 const getInventoryHospitalController = async (req, res) => {
   try {
+    let filters = req.body.filters || {};
+    if (req.userRole === 'hospital') {
+      filters = { inventoryType: 'out', hospital: req.body.userId };
+    } else if (req.userRole === 'donar') {
+      filters = { inventoryType: 'in', donar: req.body.userId };
+    }
+
     const inventory = await inventoryModel
-      .find(req.body.filters)
+      .find(filters)
       .populate("donar")
       .populate("hospital")
       .populate("organisation")
@@ -133,10 +140,16 @@ const getInventoryHospitalController = async (req, res) => {
 // GET BLOOD RECORD OF 3
 const getRecentInventoryController = async (req, res) => {
   try {
+    const filters = req.userRole === 'organisation'
+      ? { organisation: req.body.userId }
+      : req.userRole === 'hospital'
+        ? { hospital: req.body.userId }
+        : {};
     const inventory = await inventoryModel
-      .find({
-        organisation: req.body.userId,
-      })
+      .find(filters)
+      .populate('donar')
+      .populate('hospital')
+      .populate('organisation')
       .limit(3)
       .sort({ createdAt: -1 });
     return res.status(200).send({

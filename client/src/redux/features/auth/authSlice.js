@@ -13,7 +13,11 @@ const initialState = {
 const authSlice = createSlice({
   name: "auth",
   initialState: initialState,
-  reducers: {},
+  reducers: {
+    updateProfilePicture(state, { payload }) {
+      if (state.user) state.user.profilePic = payload;
+    },
+  },
   extraReducers: (builder) => {
     //Login user
     builder.addCase(userLogin.pending, (state) => {
@@ -69,4 +73,5 @@ const authSlice = createSlice({
   },
 });
 
+export const { updateProfilePicture } = authSlice.actions;
 export default authSlice;

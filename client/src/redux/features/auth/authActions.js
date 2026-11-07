@@ -15,11 +15,9 @@ export const userLogin = createAsyncThunk(
             }
             return data;
         } catch (error) {
-            if(error.response && error.response.data.message){
-                return rejectWithValue(error.response.data.message)
-            }else{
-                return rejectWithValue(error.message)
-            }
+            const message = error?.response?.data?.message || error?.message || 'Unable to log in. Please try again.';
+            toast.error(message);
+            return rejectWithValue(message);
         }
     }
 );
@@ -35,7 +33,8 @@ export const userRegister = createAsyncThunk(
         hospitalName,
         website,
         address,
-        phone}, {rejectWithValue}) => {
+        phone,
+        profilePic}, {rejectWithValue}) => {
             try{
                 const {data}=await API.post('auth/register',{
                     name,
@@ -46,7 +45,8 @@ export const userRegister = createAsyncThunk(
                     hospitalName,
                     website,
                     address,
-                    phone
+                    phone,
+                    profilePic
                 })
                 
                 if(data.success){
@@ -57,13 +57,9 @@ export const userRegister = createAsyncThunk(
                 }
 
             }catch(error){
-                if(error.response && error.response.data.message){
-                    toast.error(error.response.data.message)
-                    return rejectWithValue(error.response.data.message)
-                }else{
-                    toast.error(error.response.data.message)
-                    return rejectWithValue(error.message)
-                }
+                const message = error?.response?.data?.message || error?.message || 'Unable to register. Please try again.';
+                toast.error(message);
+                return rejectWithValue(message);
             }
     }
 )

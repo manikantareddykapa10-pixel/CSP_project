@@ -45,7 +45,19 @@ const OrgDonorList = () => {
             </td></tr>
           ) : data.map(record => (
             <tr key={record._id}>
-              <td>{record.name || `${record.organisationName} (ORG)`}</td>
+              <td>
+                <div className="d-flex align-items-center gap-2">
+                  {record.profilePic && (
+                    <img
+                      src={record.profilePic}
+                      alt=""
+                      className="rounded-circle"
+                      style={{ width: 36, height: 36, objectFit: 'cover' }}
+                    />
+                  )}
+                  {record.name || `${record.organisationName} (ORG)`}
+                </div>
+              </td>
               <td>{record.email}</td>
               <td>{record.phone}</td>
               <td>{moment(record.createdAt).format('DD/MM/YYYY hh:mm A')}</td>
@@ -76,6 +88,7 @@ const statusBadge = (status) => {
 };
 
 const DonorView = () => {
+  const { user } = useSelector(state => state.auth);
   const [donationHistory, setDonationHistory] = useState([]);
   const [availableRequests, setAvailableRequests] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
@@ -101,9 +114,11 @@ const DonorView = () => {
   const fetchMyAccepted = useCallback(async () => {
     try {
       const { data } = await API.get('/requests/mine');
-      if (data?.success) setMyRequests(data.requests.filter(r => r.acceptedBy && r.status !== 'cancelled'));
+      if (data?.success) setMyRequests(data.requests.filter(r =>
+        (r.acceptedBy === user?._id || r.respondedByMe) && r.status !== 'cancelled'
+      ));
     } catch (err) { console.error(err); }
-  }, []);
+  }, [user?._id]);
 
   useEffect(() => {
     const init = async () => {
@@ -267,13 +282,40 @@ const DonorView = () => {
                     <span style={{ fontSize: 22, fontWeight: 700, color: '#d32f2f' }}>{r.bloodGroup}</span>
                     <span className="ms-2">{statusBadge(r.status)}</span>
                     <span className="ms-2 text-muted" style={{ fontSize: 12 }}>
-                      {r.requesterName} — {r.requesterPhone}
+                      {r.requesterName}
                     </span>
                   </div>
                   {r.status === 'accepted' && (
                     <button className="btn btn-sm btn-success" onClick={() => markComplete(r._id)}>
                       <i className="fa-solid fa-check me-1"></i>Done
                     </button>
+                  )}
+                </div>
+                <div className="mt-2 small">
+                  {r.requesterPhone && (
+                    <div><i className="fa-solid fa-phone me-1 text-muted"></i><a href={`tel:${r.requesterPhone}`}>{r.requesterPhone}</a></div>
+                  )}
+                  {r.address && (
+                    <div><i className="fa-solid fa-location-dot me-1 text-muted"></i>{r.address}</div>
+                  )}
+                  {r.notes && (
+                    <div className="mt-1"><strong>Patient details:</strong> {r.notes}</div>
+                  )}
+                  {(r.location_lat != null && r.location_lng != null) || r.address ? (
+                    <a
+                      className="btn btn-sm btn-outline-primary mt-2"
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                        r.location_lat != null && r.location_lng != null
+                          ? `${r.location_lat},${r.location_lng}`
+                          : r.address
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <i className="fa-solid fa-route me-1"></i>Navigate to hospital
+                    </a>
+                  ) : (
+                    <div className="text-muted mt-1">Hospital location was not provided.</div>
                   )}
                 </div>
               </div>

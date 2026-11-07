@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
 import Layout from '../components/shared/Layout/Layout';
 import API from '../services/API';
 import toast from 'react-hot-toast';
@@ -24,6 +25,7 @@ const statusBadge = (status) => {
 
 const RequestBlood = () => {
   const { user } = useSelector(state => state.auth);
+  const navigate = useNavigate();
   const [bloodGroup, setBloodGroup] = useState('O+');
   const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
@@ -38,15 +40,8 @@ const RequestBlood = () => {
       const { data } = await API.get('/requests/mine');
       if (data?.success) {
         const prev = prevRequestsRef.current;
-        // Notify if any request changed to 'accepted'
         data.requests.forEach(r => {
           const old = prev.find(p => p._id === r._id);
-          if (old && old.status === 'pending' && r.status === 'accepted') {
-            toast.success(
-              `🎉 Donor found for your ${r.bloodGroup} request!\nDonor: ${r.donorName} — 📞 ${r.donorPhone}`,
-              { duration: 8000 }
-            );
-          }
           if (old && old.status === 'accepted' && r.status === 'completed') {
             toast.success(`✅ Your ${r.bloodGroup} blood request is complete!`, { duration: 5000 });
           }
@@ -90,9 +85,12 @@ const RequestBlood = () => {
         bloodGroup, location_lat: location.lat, location_lng: location.lng, address, notes
       });
       if (data?.success) {
-        toast.success('Blood request posted! Donors will be notified.');
+        toast.success('Blood request posted. Open the Blood Map to find and notify matching donors.');
         setAddress(''); setNotes(''); setLocation(null);
-        fetchMyRequests();
+        await fetchMyRequests();
+        if (user?.role === 'hospital' && data.request?._id) {
+          navigate(`/blood-map?request=${encodeURIComponent(data.request._id)}`);
+        }
       } else {
         toast.error(data?.message || 'Error posting request');
       }
@@ -216,8 +214,26 @@ const RequestBlood = () => {
                 </div>
               )}
 
+              {r.responders?.length > 0 && (
+                <div className="p-3 rounded mb-2" style={{ background: '#e8f5e9', border: '1px solid #a5d6a7' }}>
+              <strong style={{ color: '#2e7d32' }}>Donors who responded</strong>
+              {r.responders.map(responder => (
+                <div key={responder.donorId} className="mt-1" style={{ fontSize: 14 }}>
+                  <b>{responder.donorName}</b> ({responder.donorBloodGroup}) —{' '}
+                  <a href={`tel:${responder.donorPhone}`}>{responder.donorPhone}</a>
+                </div>
+              ))}
+                </div>
+              )}
+
               <div className="d-flex gap-2 mt-2">
-                {r.status === 'accepted' && r.requestedBy === user?._id && (
+                {user?.role === 'hospital' && r.status === 'pending' && (
+              <Link className="btn btn-sm btn-outline-primary" to={`/blood-map?request=${encodeURIComponent(r._id)}`}>
+                <i className="fa-solid fa-map-location-dot me-1"></i>
+                {r.broadcasted ? 'View donor responses on map' : 'Find matching donors on map'}
+              </Link>
+                )}
+                {(r.status === 'accepted' || (r.broadcasted && r.responders?.length > 0)) && r.requestedBy === user?._id && (
                   <button className="btn btn-sm btn-success" onClick={() => handleComplete(r._id)}>
                     <i className="fa-solid fa-check me-1"></i>Mark Complete
                   </button>

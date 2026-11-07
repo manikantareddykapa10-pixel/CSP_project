@@ -7,6 +7,7 @@ import { useSelector } from "react-redux";
 const Sidebar = () => {
   const location = useLocation();
   const { user } = useSelector((state) => state.auth);
+  const canAccessReports = ["admin", "hospital"].includes(user?.role);
   return (
     <div>
       <div className="sidebar">
@@ -71,6 +72,14 @@ const Sidebar = () => {
             <>
               <div
                 className={`menu-item ${
+                  location.pathname === "/profile" && "active"
+                }`}
+              >
+                <i className="fa-solid fa-user"></i>
+                <Link to="/profile">My Profile</Link>
+              </div>
+              <div
+                className={`menu-item ${
                   location.pathname === "/donar" && "active"
                 }`}
               >
@@ -116,24 +125,25 @@ const Sidebar = () => {
           )}
 
           {/* Analytics */}
-          {user?.role !== "admin" && (
+          {canAccessReports && (
             <div className={`menu-item ${location.pathname === "/analytics" && "active"}`}>
               <i className="fa-solid fa-chart-bar"></i>
               <Link to="/analytics">Analytics</Link>
             </div>
           )}
 
-          {/* Statistical Dashboard - visible to all roles */}
-          <div
-            className={`menu-item ${
-              location.pathname === "/statistical-dashboard" && "active"
-            }`}
-          >
-            <i className="fa-solid fa-brain"></i>
-            <Link to="/statistical-dashboard">Statistical Dashboard</Link>
-          </div>
+          {canAccessReports && (
+            <div
+              className={`menu-item ${
+                location.pathname === "/statistical-dashboard" && "active"
+              }`}
+            >
+              <i className="fa-solid fa-brain"></i>
+              <Link to="/statistical-dashboard">Statistical Dashboard</Link>
+            </div>
+          )}
 
-          {user?.role === "hospital" && (
+          {canAccessReports && (
             <div
               className={`menu-item ${
                 location.pathname === "/consumer" && "active"

@@ -22,7 +22,8 @@ export const handleRegister = (
   hospitalName,
   website,
   address,
-  phone
+  phone,
+  profilePic
 ) => {
   e.preventDefault();
   try {
@@ -35,7 +36,8 @@ export const handleRegister = (
       hospitalName,
       website,
       address,
-      phone}
+      phone,
+      profilePic}
     ))
   } catch (error) {
     console.log("Error in Register: ", error);

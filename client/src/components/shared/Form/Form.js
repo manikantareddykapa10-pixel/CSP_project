@@ -13,6 +13,36 @@ const Form = ({ formType, submitBtn, formTitle }) => {
   const [website, setWebsite] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
+  const [profilePic, setProfilePic] = useState("");
+  const [profilePicError, setProfilePicError] = useState("");
+
+  const handleProfilePicChange = (event) => {
+    const file = event.target.files?.[0];
+    setProfilePicError("");
+    if (!file) {
+      setProfilePic("");
+      return;
+    }
+    setProfilePic("");
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setProfilePicError("Choose a JPEG, PNG, or WebP image.");
+      event.target.value = "";
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setProfilePicError("Image must be 2 MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") setProfilePic(reader.result);
+      else setProfilePicError("Could not read the selected image.");
+    };
+    reader.onerror = () => setProfilePicError("Could not read the selected image.");
+    reader.readAsDataURL(file);
+  };
 
   return (
     <div>
@@ -32,7 +62,8 @@ const Form = ({ formType, submitBtn, formTitle }) => {
               hospitalName,
               website,
               address,
-              phone
+              phone,
+              profilePic
             );
         }}
       >
@@ -61,7 +92,13 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                 name="role"
                 id={opt.id}
                 value={opt.value}
-                onChange={(e) => setRole(e.target.value)}
+                onChange={(e) => {
+                  setRole(e.target.value);
+                  if (!["donar", "hospital"].includes(e.target.value)) {
+                    setProfilePic("");
+                    setProfilePicError("");
+                  }
+                }}
                 defaultChecked={opt.defaultChecked}
                 style={{ display: 'none' }}
               />
@@ -169,6 +206,31 @@ const Form = ({ formType, submitBtn, formTitle }) => {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
+                  {(role === "donar" || role === "hospital") && (
+                    <div className="form-outline mb-4">
+                      <label className="form-label" htmlFor="profilePic">
+                        Profile picture (optional)
+                      </label>
+                      <input
+                        id="profilePic"
+                        name="profilePic"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="form-control"
+                        onChange={handleProfilePicChange}
+                      />
+                      <small className="text-muted">JPEG, PNG, or WebP; up to 2 MB.</small>
+                      {profilePicError && <div className="text-danger small">{profilePicError}</div>}
+                      {profilePic && (
+                        <img
+                          src={profilePic}
+                          alt="Profile preview"
+                          className="rounded-circle mt-2"
+                          style={{ width: 72, height: 72, objectFit: "cover" }}
+                        />
+                      )}
+                    </div>
+                  )}
                 </>
               );
           }

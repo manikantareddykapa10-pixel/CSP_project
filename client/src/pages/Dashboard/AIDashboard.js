@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import Layout from "../../components/shared/Layout/Layout";
 import API from "../../services/API";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const AIDashboard = () => {
+  const { user } = useSelector((state) => state.auth);
   const [predictions, setPredictions] = useState(null);
   const [optimization, setOptimization] = useState(null);
   const [matchResults, setMatchResults] = useState(null);
@@ -24,10 +27,12 @@ const AIDashboard = () => {
         params: { bloodType: selectedBloodType, days: forecastDays }
       });
       if (data?.success) setPredictions(data);
+      else toast.error(data?.message || "Could not generate a demand prediction.");
     } catch (err) {
-      console.log(err);
+      toast.error(err?.response?.data?.message || "Could not generate a demand prediction.");
+    } finally {
+      setLoading((p) => ({ ...p, predict: false }));
     }
-    setLoading((p) => ({ ...p, predict: false }));
   };
 
   // Fetch inventory optimization
@@ -36,26 +41,43 @@ const AIDashboard = () => {
     try {
       const { data } = await API.get("/ai/optimize-inventory");
       if (data?.success) setOptimization(data);
+      else toast.error(data?.message || "Could not load inventory recommendations.");
     } catch (err) {
-      console.log(err);
+      toast.error(err?.response?.data?.message || "Could not load inventory recommendations.");
+    } finally {
+      setLoading((p) => ({ ...p, optimize: false }));
     }
-    setLoading((p) => ({ ...p, optimize: false }));
   };
 
   // Smart donor matching
   const findDonors = async () => {
     setLoading((p) => ({ ...p, match: true }));
     try {
+      let location = user?.location;
+      if (!location && navigator.geolocation) {
+        location = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            ({ coords }) => resolve({ lat: coords.latitude, lng: coords.longitude }),
+            () => reject(new Error("Location access was denied. Allow location or add it to your profile.")),
+            { timeout: 10000 }
+          );
+        });
+      }
+      if (!location || !Number.isFinite(Number(location.lat)) || !Number.isFinite(Number(location.lng))) {
+        throw new Error("Set your location before searching for nearby donors.");
+      }
       const { data } = await API.post("/ai/match-donors", {
         bloodType: matchBloodType,
-        location: { lat: 28.6139, lng: 77.209 }, // Delhi coordinates
+        location: { lat: Number(location.lat), lng: Number(location.lng) },
         urgency: "high",
         maxDistance: 50,
         limit: 10,
       });
       if (data?.success) setMatchResults(data);
+      else toast.error(data?.message || "Could not find matching donors.");
     } catch (err) {
-      console.log(err);
+      toast.error(err?.response?.data?.message || err.message || "Could not find matching donors.");
+      setMatchResults(null);
     }
     setLoading((p) => ({ ...p, match: false }));
   };
@@ -64,7 +86,9 @@ const AIDashboard = () => {
     try {
       const { data } = await API.get('/analytics/stats');
       if (data?.success) setLiveStats(data.stats);
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Could not load dashboard statistics.");
+    }
   };
 
   useEffect(() => {

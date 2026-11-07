@@ -20,6 +20,7 @@ import AIDashboard from './pages/Dashboard/AIDashboard';
 import Chatbot from './components/Chatbot/Chatbot';
 import BloodMap from './pages/BloodMap';
 import RequestBlood from './pages/RequestBlood';
+import Profile from './pages/Profile';
 
 function App() {
   return (
@@ -36,7 +37,7 @@ function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['admin']}>
               <AdminHome />
             </ProtectedRoute>
           }
@@ -44,7 +45,7 @@ function App() {
         <Route
           path="/donar-list"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['admin']}>
               <DonarList />
             </ProtectedRoute>
           }
@@ -52,7 +53,7 @@ function App() {
         <Route
           path="/hospital-list"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['admin']}>
               <HospitalList />
             </ProtectedRoute>
           }
@@ -60,7 +61,7 @@ function App() {
         <Route
           path="/org-list"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['admin']}>
               <OrgList />
             </ProtectedRoute>
           }/>
@@ -76,12 +77,12 @@ function App() {
             </ProtectedRoute>
         } />
         <Route path="/analytics" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['admin', 'hospital']}>
               <Analytics/>
             </ProtectedRoute>
         } />
         <Route path="/consumer" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['admin', 'hospital']}>
               <Consumer/>
             </ProtectedRoute>
         } />
@@ -90,13 +91,18 @@ function App() {
               <Donation/>
             </ProtectedRoute>
         } />
+        <Route path="/profile" element={
+            <ProtectedRoute allowedRoles={['donar']}>
+              <Profile/>
+            </ProtectedRoute>
+        } />
         <Route path="/organisation" element={
             <ProtectedRoute>
               <OrganisationPage/>
             </ProtectedRoute>
         } />
         <Route path="/statistical-dashboard" element={
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['admin', 'hospital']}>
               <AIDashboard/>
             </ProtectedRoute>
         } />

@@ -9,6 +9,7 @@ const Header = () => {
 
     const {user} = useSelector(state=> state.auth);
     const location = useLocation();
+    const canAccessReports = ['admin', 'hospital'].includes(user?.role);
     //logout handler
     const handleLogout=()=>{
         localStorage.clear();
@@ -19,7 +20,7 @@ const Header = () => {
     <>
         <nav className='navbar'>
             <div className="container-fluid">
-                <div className="navbar-brand h1"><MdOutlineBloodtype color='red'/>Rakt <span className='gold'>- Setu</span></div>
+                <div className="navbar-brand h1"><MdOutlineBloodtype color='red'/>Blood <span className='gold'>- Bridge</span></div>
                 <ul className='navbar-nav flex-row'>
                     <li className="nav-item mx-3">
                         <p className='nav-link'><FaUserAlt/> Welcome <span className='gold'> {user?.name || user?.hospitalName || user?.organisationName} &nbsp;</span>
@@ -27,7 +28,7 @@ const Header = () => {
                         </p>
                     </li>
                     {
-                        (location.pathname === '/' || location.pathname === '/donar' || location.pathname === '/hospital') ? (
+                        (location.pathname === '/' || location.pathname === '/donar' || location.pathname === '/hospital') && canAccessReports ? (
                             <li className='nav-item mx-3'>
                                 <Link to='/analytics' className='nav-link'>
                                     Analytics
